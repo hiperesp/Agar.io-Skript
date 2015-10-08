@@ -1,0 +1,640 @@
+options:
+	solo: quartz:0 or wool
+	resetsolo: quartz
+	world: Agariomap
+	message-command-enter: &a/join &8> &7Entrar na partida
+	message-command-leave: &a/leave &8> &7Sair da partida
+	message-command-setspawn: &4/agar setspawn &8> &7Marca o spawn dentro do jogo - &4Não utilizado 
+	message-command-setleave: &7/agar setleave &8> &7Marca o mainspawn
+	message-command-setballs: &7/agar setballs <1 a 25> &8> &7Marca os pontos de spawn de bolas e players.
+	message-enter: &a&lVoce entrou na partida!&a Não pise na &6&largila laranja&a, pois ela fará você perder alguns pontos aleatórios
+	message-leave: &4&lVoce perdeu/saiu da partida!
+	message-setspawn: &7Voce marcou o spawn do agar em: %location of player%!
+	message-setleave: &7Voce marcou o ponto de saida: %location of player%!
+	message-setballs: &7Voce marcou o spawn de bolas (e players) %arg 2% em: %location of player%!
+	message-noballs: &7Voce não tem bolas pra dropar.
+	message-dropball: &aVoce dropou 1 bola!
+	message-walkminenoballs: &aVocê pisou em uma &4mina&a, mas voce não tem nenhuma bola, portanto não perdeu nenhuma...
+	message-walkmine: &aVocê pisou em uma &4mina&a, portanto perdeu algumas bolas... (-%{_randomNumber}%)
+	message-cor-1: %{chatcor.%player%}%Você escolheu a cor 
+	message-cor-2: .
+	message-apelao: Você quer apelar? Desista, escolha outra cor.
+	message-semcor: Você não escolheu nenhuma cor, as cores são: gray, light gray, black, pink, brown e &6random (para vips).
+	message-score-title: &6&lAgar.io
+	message-score-division: &6------------
+	message-score-jpl1: &6Entre no canal
+	message-score-jpl2: &6teteugames2011
+	message-score-jpl3: &6e inscreva-se
+	message-score-njpl1: Digite &a&l/join
+	message-score-njpl2: para jogar!
+	message-score-njpl3: (novamente)
+	message-espec: Você está no modo &3Espectador&f, digite /join para jogar
+	message-command-espec: &a/espec &8> &7Modo espectador
+	message-morri: &4Você morreu, pois alguém te comeu :(
+	message-comeu: &fcomeu
+	message-comeu-2: &f!
+	mine: orange clay
+	speed: 30
+	jumpboost: -100
+	range: 50
+	depreciacao: 500
+	depreciacaovip: 250
+	initialpoints: 20
+	amount: 1
+	amountvip: 2
+	hackmine: black clay
+	permissionadmin: agar.admin
+	permissionvip: vip.vip
+	bolaname: Bola
+	droparbolaname: Dropar 1 bola
+	commanderror: Unknown command. Type ''/help'' for help.
+	messagenopermission: Você não tem permissão para escolher %arg 1%.
+	
+on level change:
+	if {ingame.%player%} is true:
+		set player's walk speed to {@speed}/{point.%player%}
+		apply jump boost {@jumpboost} to the player for 28 minutes
+	
+
+every 10 seconds:
+	loop dropped items:
+		loop-dropped item is in world "{@world}":
+			delete loop-dropped item
+	
+
+command /agar [<text=help>] [<number>]:
+	trigger:
+		if arg 1 is "help":
+			message "{@message-command-enter}"
+			message "{@message-command-leave}"
+			message "{@message-command-espec}"
+			if player has permission "{@permissionadmin}":
+				message "{@message-command-setspawn}"
+				message "{@message-command-setleave}"
+				message "{@message-command-setballs}"
+			stop
+			
+		if arg 1 is "join":
+			remove invisibility from player
+			set {ingame.%player%} to true
+			#teleport player at {agar.spawn}
+			set {_randomspawn} to a random integer between 1 and 25
+			teleport player at {balls.%{_randomspawn}%}
+			set {point.%player%} to {@initialpoints}
+			set the player's level to {point.%player%}
+			set player's walk speed to {@speed}/{point.%player%}
+			apply jump boost {@jumpboost} to the player for 28 minutes
+			add player to {players::*}
+			clear inventory of player
+			message "{@message-enter}"
+			stop
+			
+		if arg 1 is "leave":
+			apply invisibility 1 to player for 5 days
+			remove speed from player
+			set {ingame.%player%} to false
+			teleport player at {agar.leave}
+			set {point.%player%} to 0
+			set the walk speed of the player to 1
+			remove player from {players::*}
+			remove jump from player
+			message "{@message-leave}"
+			display scoreboard named "" to player
+			make score of "" in scoreboard of player to 0
+			stop
+			
+		if arg 1 is "espec":
+			apply invisibility 1 to player for 5 days
+			remove speed from player
+			set {ingame.%player%} to false
+			teleport player at {agar.leave}
+			set {point.%player%} to 0
+			set the walk speed of the player to 1
+			remove player from {players::*}
+			remove jump from player
+			message "{@message-espec}"
+			display scoreboard named "" to player
+			make score of "" in scoreboard of player to 0
+			stop
+
+		if arg 1 is "morri":
+			apply invisibility 1 to player for 5 days
+			remove speed from player
+			set {ingame.%player%} to false
+			teleport player at {agar.leave}
+			set {point.%player%} to 0
+			set the walk speed of the player to 1
+			remove player from {players::*}
+			remove jump from player
+			message "{@message-morri}"
+			display scoreboard named "" to player
+			make score of "" in scoreboard of player to 0
+			stop
+			
+			
+		if arg 1 is "setspawn":
+			if player has permission "{@permissionadmin}":
+				set {agar.spawn} to location of player
+				message "{@message-setspawn}"
+				stop
+				
+		if arg 1 is "setleave":
+			if player has permission "{@permissionadmin}":
+				set {agar.leave} to location of player
+				message "{@message-setleave}"
+				stop
+				
+		if arg 1 is "setballs":
+			if arg 2 is set:
+				if arg 2 is smaller than 26:
+					if arg 2 is greater than 0:
+						if player has permission "{@permissionadmin}":
+							set {balls.%arg 2%} to location of player
+							message "{@message-setballs}"
+							stop
+
+		
+command /agario:
+	trigger:
+		make player execute command "/agar espec"
+
+
+command /join:
+	trigger:
+		player is in world "{@world}":
+			make player execute "/agar join"
+
+command /leave:
+	trigger:
+		player is in world "{@world}":
+			make player execute "/agar leave"
+
+command /espec:
+	trigger:
+		player is in world "{@world}":
+			make player execute "/agar espec"
+
+command /morri:
+	trigger:
+		player is in world "{@world}":
+			make player execute "/agar morri"
+
+
+every 2.5 seconds:
+	set {_nb} to 1
+	loop 25 times:
+		drop a wool at {balls.%{_nb}%}
+		add 1 to {_nb}
+
+								
+									
+on join:
+	set {ingame.%player%} to false
+	stop
+	
+every second:
+	loop all players:
+		if {ingame.%loop-player%} is true:
+			set the loop-player's level to {point.%loop-player%}
+			remove speed from loop-player
+
+every 1 tick:
+	loop all players:
+		if {ingame.%loop-player%} is true:
+			loop all players in radius {point.%loop-player%}/{@range} around loop-player:
+				if {ingame.%loop-player-2%} is true:
+					if {point.%loop-player-1%} > {point.%loop-player-2%}:
+						broadcast "%{chatcor.%loop-player-1%}%%loop-player-1% (%{point.%loop-player-1%}%) {@message-comeu} %{chatcor.%loop-player-2%}%%loop-player-2% (%{point.%loop-player-2%}%){@message-comeu-2}"
+						add {point.%loop-player-2%} to {point.%loop-player-1%}
+						set {point.%loop-player-2%} to {@initialpoints}
+						teleport loop-player-2 at {agar.spawn}
+						make loop-player-2 execute command "/agar morri"
+						set the loop-player-2's level to {point.%loop-player-2%}
+						set the loop-player-1's level to {point.%loop-player-1%}
+						stop
+
+on break:
+	if {ingame.%player%} is true:
+		cancel event
+		stop
+		
+on damage:
+	if {ingame.%victim%} is true:
+		cancel event
+		stop
+on place:
+	if {ingame.%player%} is true:
+		cancel event
+		stop	
+
+on hunger meter change:
+	if {ingame.%player%} is true:
+		cancel event
+		stop
+
+
+on rightclick with door:
+	player is in world "{@world}":
+		if {ingame.%player%} is true:
+			make player execute command "/agar leave"
+			add player to {players::*}
+			stop
+		else:
+			make player execute command "/agar join"
+			remove player from {players::*}
+			stop
+
+
+on hunger meter change:
+	cancel event
+
+
+
+every 1 second:
+	loop all players:
+		if loop-player is in world "{@world}":
+			display scoreboard named "{@message-score-title}" to loop-player
+			move display of loop-player to sidebar
+			if {ingame.%loop-player%} is true:
+				make score of "{@message-score-division}" in scoreboard of loop-player to -1
+				make score of "{@message-score-jpl1}" in scoreboard of loop-player to -2
+				make score of "{@message-score-jpl2}" in scoreboard of loop-player to -3
+				make score of "{@message-score-jpl3}" in scoreboard of loop-player to -4
+			else:
+				make score of "{@message-score-division}" in scoreboard of loop-player to -1
+				make score of "{@message-score-njpl1}" in scoreboard of loop-player to -2
+				make score of "{@message-score-njpl2}" in scoreboard of loop-player to -3
+				make score of "{@message-score-njpl3}" in scoreboard of loop-player to -4
+				
+			loop {players::*}:
+				if loop-value-1 is online:
+					if {ingame.%loop-value-1%} is true:
+						if loop-value-1 has permission "{@permissionvip}":
+							make score of "%{chatcor.%loop-value-1%}%&l%loop-value-1%" in scoreboard of loop-player to {point.%loop-value-1%}
+						else:
+							make score of "%{chatcor.%loop-value-1%}%%{chatcor.%loop-value-1%}%%loop-value-1%" in scoreboard of loop-player to {point.%loop-value-1%}
+					else:
+						remove loop-value-1 from {players::*}
+				else:
+					remove loop-value-1 from {players::*}
+		else:
+			remove loop-player from {players::*}
+
+
+every 10 seconds:
+	set {_players} to 0
+	loop all players:
+		if loop-player is in world "{@world}":
+			if {ingame.%loop-player%} is true:
+				add loop-player to {players::*}
+
+on command:
+	if {ingame.%player%} is true:
+		if command is "agar leave":
+			stop
+		else if command is "agar":
+			stop
+		else if command is "agar *":
+			stop
+		else if command is "spawn":
+			make player execute "agar leave"
+		else:
+			cancel event
+				
+every 1 second:
+	loop all players:
+		if {ingame.%loop-player%} is true:
+			set slot 0 of loop-player to white wool named "{@droparbolaname}"
+			set slot 1 of loop-player to light gray glass named " &fDigite &c/leave&f para sair "
+			set slot 2 of loop-player to light gray glass named "&fDigite &c/leave&f para sair"
+			set slot 3 of loop-player to light gray glass named " &fDigite &c/leave&f para sair "
+			set slot 4 of loop-player to light gray glass named "&fDigite &c/leave&f para sair"
+			set slot 5 of loop-player to light gray glass named " &fDigite &c/leave&f para sair "
+			set slot 6 of loop-player to light gray glass named "&fDigite &c/leave&f para sair"
+			set slot 7 of loop-player to light gray glass named " &fDigite &c/leave&f para sair "
+			set slot 8 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 9 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 10 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 11 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 12 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 13 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 14 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 15 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 16 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 17 of loop-player to light gray glass named "  &fDigite &c/leave&f para sair  "
+			set slot 18 of loop-player to air
+			set slot 19 of loop-player to air
+			set slot 20 of loop-player to air
+			set slot 21 of loop-player to air
+			set slot 22 of loop-player to air
+			set slot 23 of loop-player to air
+			set slot 24 of loop-player to air
+			set slot 25 of loop-player to air
+			set slot 26 of loop-player to air
+			set slot 27 of loop-player to air
+			set slot 28 of loop-player to air
+			set slot 29 of loop-player to air
+			set slot 30 of loop-player to air
+			set slot 31 of loop-player to air
+			set slot 32 of loop-player to air
+			set slot 33 of loop-player to air
+			set slot 34 of loop-player to air
+			set slot 35 of loop-player to air
+			set loop-player's flight state to false
+			stop
+		else if loop-player is in world "{@world}":
+			equip loop-player with air
+			equip loop-player with air
+			equip loop-player with air
+			equip loop-player with air
+	
+			if loop-player has permission "{@permissionadmin}":
+				set slot 1 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 2 of loop-player to light gray glass named "&fDigite &a/join&f para jogar"
+				set slot 3 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 4 of loop-player to light gray glass named "&fDigite &a/join&f para jogar"
+				set slot 5 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 6 of loop-player to light gray glass named "&fDigite &a/join&f para jogar"
+				set slot 7 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 8 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set loop-player's flight state to true
+				remove jump boost from loop-player
+				set loop-player's walk speed to {@speed}/{point.%loop-player%}
+			else:
+				set slot 0 of loop-player to light gray glass named "&fDigite &a/join&f para jogar"
+				set slot 1 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 2 of loop-player to light gray glass named "&fDigite &a/join&f para jogar"
+				set slot 3 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 4 of loop-player to light gray glass named "&fDigite &a/join&f para jogar"
+				set slot 5 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 6 of loop-player to light gray glass named "&fDigite &a/join&f para jogar"
+				set slot 7 of loop-player to light gray glass named " &fDigite &a/join&f para jogar "
+				set slot 8 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 9 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 10 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 11 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 12 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 13 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 14 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 15 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 16 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 17 of loop-player to light gray glass named "  &fDigite &a/join&f para jogar  "
+				set slot 18 of loop-player to air
+				set slot 19 of loop-player to air
+				set slot 20 of loop-player to air
+				set slot 21 of loop-player to air
+				set slot 22 of loop-player to air
+				set slot 23 of loop-player to air
+				set slot 24 of loop-player to air
+				set slot 25 of loop-player to air
+				set slot 26 of loop-player to air
+				set slot 27 of loop-player to air
+				set slot 28 of loop-player to air
+				set slot 29 of loop-player to air
+				set slot 30 of loop-player to air
+				set slot 31 of loop-player to air
+				set slot 32 of loop-player to air
+				set slot 33 of loop-player to air
+				set slot 34 of loop-player to air
+				set slot 35 of loop-player to air
+				set loop-player's flight state to true
+				remove jump boost from loop-player
+				set loop-player's walk speed to {@speed}/{point.%loop-player%}
+
+				stop
+
+every 1 second:
+	loop all players:
+		if loop-player is in world "{@world}":
+			stop
+		else:
+			set {ingame.%loop-player%} to false
+
+on quit:
+	set {ingame.%player%} to false
+
+on join:
+	set {ingame.%player%} to false
+		
+on rightclick with white wool:
+	player is in world "{@world}":
+		if player has permission "{@permissionvip}":
+			cancel event
+			if {ingame.%player%} is true:
+				if level of player is less than {@amountvip}:
+					message "{@message-noballs}"
+					stop
+				else:
+					drop a wool named "{@bolaname}" at player
+					set {point.%player%} to {point.%player%}-{@amountvip}
+					set the player's level to {point.%player%}
+					message "{@message-dropball}"
+					stop
+			else:
+				stop
+		else:
+			cancel event
+			if {ingame.%player%} is true:
+				if level of player is less than {@amount}:
+					message "{@message-noballs}"
+					stop
+				else:
+					drop a wool named "{@bolaname}" at player
+					set {point.%player%} to {point.%player%}-{@amount}
+					set the player's level to {point.%player%}
+					message "{@message-dropball}"
+					stop
+			else:
+				stop
+
+
+on player drop:
+	player is in world "{@world}":
+		if player has permission "{@permissionvip}":
+			cancel event
+			if {ingame.%player%} is true:
+				if level of player is less than {@amountvip}:
+					message "{@message-noballs}"
+					stop
+				else:
+					drop a wool named "{@bolaname}" at player
+					set {point.%player%} to {point.%player%}-{@amountvip}
+					set the player's level to {point.%player%}
+					message "{@message-dropball}"
+					stop
+			else:
+				stop
+		else:
+			cancel event
+			if {ingame.%player%} is true:
+				if level of player is less than {@amount}:
+					message "{@message-noballs}"
+					stop
+				else:
+					drop a wool named "{@bolaname}" at player
+					set {point.%player%} to {point.%player%}-{@amount}
+					set the player's level to {point.%player%}
+					message "{@message-dropball}"
+					stop
+			else:
+				stop
+
+on walking on {@mine}:
+	player is in world "{@world}":
+		if {ingame.%player%} is true:
+			cancel event
+			loop blocks above player:
+				if level of player is less than {@initialpoints}:
+					message "{@message-walkminenoballs}"
+					stop
+				else:
+					set {_randomNumber} to a random integer between {@initialpoints} and {point.%player%}
+					set {point.%player%} to {point.%player%}-{_randomNumber}
+					drop a wool named "{@bolaname}" above player
+					set the player's level to {point.%player%}
+					message "{@message-walkmine}"
+					stop
+
+					
+on pick up:
+	if event-item is a wool:
+		if {ingame.%player%} is true:
+			add {@amount} to {point.%player%}
+			if player has permission "{@permissionvip}":
+				add {@amount} to {point.%player%}
+			set the player's level to {point.%player%}
+			stop
+		else:
+			cancel event
+			stop
+			
+command /cor <text>:
+	usage: /cor white, gray, light gray, black, pink, red, orange, yellow, green, lime, light blue, cyan, purple, magenta, blue, brown e &6random (para vips)
+	trigger:
+		if player is in world "{@world}":
+			if arg 1 is "white":
+				message "{@message-apelao}"
+				set {cor.%player%} to light gray wool
+				set {chatcor.%player%} to "&f"
+			else if arg 1 is "light gray":
+				set {cor.%player%} to light gray wool
+				set {chatcor.%player%} to "&7"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "gray":
+				set {cor.%player%} to gray wool
+				set {chatcor.%player%} to "&8"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "black":
+				set {cor.%player%} to black wool
+				set {chatcor.%player%} to "&0"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "pink":
+				set {cor.%player%} to pink wool
+				set {chatcor.%player%} to "&c"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "red":
+				set {cor.%player%} to red wool
+				set {chatcor.%player%} to "&4"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "orange":
+				set {cor.%player%} to orange wool
+				set {chatcor.%player%} to "&6"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "yellow":
+				set {cor.%player%} to yellow wool
+				set {chatcor.%player%} to "&e"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "green":
+				set {cor.%player%} to green wool
+				set {chatcor.%player%} to "&2"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "lime":
+				set {cor.%player%} to light green wool
+				set {chatcor.%player%} to "&a"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "light blue":
+				set {cor.%player%} to light blue wool
+				set {chatcor.%player%} to "&9"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "cyan":
+				set {cor.%player%} to cyan wool
+				set {chatcor.%player%} to "&3"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "blue":
+				set {cor.%player%} to blue wool
+				set {chatcor.%player%} to "&1"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "purple":
+				set {cor.%player%} to purple wool
+				set {chatcor.%player%} to "&5"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "magenta":
+				set {cor.%player%} to magenta wool
+				set {chatcor.%player%} to "&d"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+			else if arg 1 is "brown":
+				set {cor.%player%} to brown wool
+				set {chatcor.%player%} to "&f"
+				message "{@message-cor-1} %arg 1% {@message-cor-2}"
+
+			else if arg 1 is "random":
+				if player has permission "{@permissionvip}":
+					set {cor.%player%} to wool
+					set {chatcor.%player%} to "&k"
+					message "{@message-cor-1} %arg 1% {@message-cor-2}"
+				else:
+					message "{@messagenopermission}"
+			else:
+				message "{@message-semcor}"
+		else:
+			message "{@commanderror}"
+		stop trigger
+
+command /cores:
+	trigger:
+		message "&aa&bb&cc&dd&ee&ff&00&11&22&33&44&55&66&77&88&99"
+
+every 1 tick:
+	loop all players:
+		if {cor.%loop-player%} is not set:
+			set {cor.%loop-player%} to pink wool
+			set {chatcor.%loop-player%} to "&d"
+		loop-player is in world "{@world}":
+			if {ingame.%loop-player%} is true:
+				loop blocks in radius {point.%loop-player%}/{@range} around block at loop-player:
+					if loop-block is {@solo}:
+						add loop-block's location to {_listofblocks::*}
+						set loop-block to {cor.%loop-player%}
+				loop blocks under loop-player:
+					if loop-block is {@solo}:
+						add loop-block's location to {_listofblocks::*}
+						set loop-block to {cor.%loop-player%}
+				wait 1 tick
+				loop {_listofblocks::*}:
+					set block at loop-value-1 to {@resetsolo}
+
+every 1 second:
+	loop all players:
+		loop-player is in world "{@world}":
+			if {ingame.%loop-player%} is true:
+				if {point.%loop-player%} > 150:
+					if loop-player has permission "{@permissionvip}":
+						remove {point.%loop-player%}/{@depreciacaovip} from {point.%loop-player%}	
+					else:
+						remove {point.%loop-player%}/{@depreciacao} from {point.%loop-player%}
+					stop
+
+
+command /giveagarpoints <number>:
+	usage: /giveagarpoints <quantidade>
+	trigger:
+		if {ingame.%player%} is true:
+			add arg 1 to {point.%player%}
+			set the player's level to {point.%player%}
+			message "Adicionou %arg 1%"
+			stop
+
+every 10 tick:
+	loop all players:
+		loop dropped items in radius {point.%loop-player%}/{@range} around block at loop-player:
+			teleport loop-dropped item to loop-player
